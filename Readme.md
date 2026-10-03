@@ -3,9 +3,14 @@
 A Flow Launcher plugin for quickly previewing mathematical expressions with
 [Desmos](https://www.desmos.com) from the search bar.
 
+<div align="center">
+  <img src="https://github.com/user-attachments/assets/a3ef009a-63a4-401b-b161-46f8f164ac32" width="400"/>
+  <img src="https://github.com/user-attachments/assets/46187217-af6e-4389-b4d7-839997126ea6" width="400"/>
+</div>
+
 ## Usage
 
-Use the `des` keyword:
+Use the `des` keyword, and preview pane (F1) to show the interface.
 
 ```text
 des y=x^2
@@ -25,7 +30,7 @@ Desmos preview, and pressing Enter copies the original input to the clipboard.
 - Add `3d` before the expression for a 3D graph:
   `des 3d z=sin(x)*cos(y)`.
 - The preview uses Desmos's calculator and refreshes when the query changes.
-- Preview colors can follow the Flow Launcher theme when theme synchronization
+- Desmos theme can follow the Flow Launcher theme when theme synchronization
   is enabled in settings.
 
 ### Expression conversion
