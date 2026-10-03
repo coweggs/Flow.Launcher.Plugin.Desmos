@@ -1,0 +1,2 @@
+dotnet publish Flow.Launcher.Plugin.Desmos -c Release -r win-x64 --no-self-contained
+Compress-Archive -LiteralPath Flow.Launcher.Plugin.Desmos/bin/Release/win-x64/publish -DestinationPath Flow.Launcher.Plugin.Desmos/bin/Desmos.zip -Force
