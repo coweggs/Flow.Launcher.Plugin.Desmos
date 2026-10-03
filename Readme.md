@@ -8,6 +8,9 @@ A Flow Launcher plugin for quickly previewing mathematical expressions with
   <img src="https://github.com/user-attachments/assets/46187217-af6e-4389-b4d7-839997126ea6" width="400"/>
 </div>
 
+## Installation
+    pm install https://github.com/coweggs/Flow.Launcher.Plugin.Desmos/releases/download/1.0.0/Desmos.zip
+
 ## Usage
 
 Use the `des` keyword, and preview pane (F1) to show the interface.
@@ -93,31 +96,3 @@ The `clamp(value,min,max)` helper is converted to
 Desmos-native notation can also be entered directly for features such as
 piecewise expressions, derivatives, integrals, lists, restrictions, and
 parametric or polar graphs.
-
-### History and commands
-
-- Graphable searches are added to recent history after a short debounce.
-- Duplicate entries are moved to the top instead of being repeated.
-- 3D history entries retain their 3D mode.
-- History is limited to the configured range of 1-100 entries (20 by default).
-- When the `des` query is empty, history appears below the usage hint.
-- A **Clear Desmos history** action appears after the history entries.
-- Type `des clear` or `des clear history` to clear saved expressions.
-
-### Settings
-
-- **Sync theme**: follow Flow Launcher's dark/light theme in the preview.
-- **History entries**: configure how many recent expressions are retained,
-  from 1 to 100.
-
-## Install
-
-1. Build the project.
-2. Add the compiled plugin to your Flow Launcher plugins folder.
-3. Restart Flow Launcher and type `des`.
-
-## Project files
-
-- `Flow.Launcher.Plugin.Desmos/` – plugin code
-- `plugin.json` – plugin metadata and action keyword
-- `SettingsControl.cs` – optional settings UI
