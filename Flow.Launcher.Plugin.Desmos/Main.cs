@@ -31,6 +31,10 @@ public sealed class Main : IAsyncPlugin, ISettingProvider, IDisposable
     {
         _ctx = context;
         _settings = context.API.LoadSettingJsonStorage<DesmosSettings>();
+        lock (_historyLock)
+        {
+            TrimHistoryToLimit();
+        }
         return Task.CompletedTask;
     }
 
@@ -67,6 +71,7 @@ public sealed class Main : IAsyncPlugin, ISettingProvider, IDisposable
             List<string> history;
             lock (_historyLock)
             {
+                TrimHistoryToLimit();
                 history = new List<string>(_settings.History);
             }
 
@@ -128,9 +133,7 @@ public sealed class Main : IAsyncPlugin, ISettingProvider, IDisposable
         {
             _settings.History.RemoveAll(value => string.Equals(value, storedExpression, StringComparison.OrdinalIgnoreCase));
             _settings.History.Insert(0, storedExpression);
-            var historyLimit = Math.Clamp(_settings.HistoryLimit, 1, 100);
-            if (_settings.History.Count > historyLimit)
-                _settings.History.RemoveRange(historyLimit, _settings.History.Count - historyLimit);
+            TrimHistoryToLimit();
         }
     }
 
@@ -169,17 +172,15 @@ public sealed class Main : IAsyncPlugin, ISettingProvider, IDisposable
 
     private void CommitPendingHistory()
     {
-        string? expression;
         lock (_historyLock)
         {
-            expression = _pendingHistoryExpression;
+            var expression = _pendingHistoryExpression;
             _pendingHistoryExpression = null;
-        }
-
-        if (!string.IsNullOrWhiteSpace(expression))
-        {
-            var (decodedExpression, is3d) = DecodeHistory(expression);
-            AddToHistory(decodedExpression, is3d);
+            if (!string.IsNullOrWhiteSpace(expression))
+            {
+                var (decodedExpression, is3d) = DecodeHistory(expression);
+                AddToHistory(decodedExpression, is3d);
+            }
         }
     }
 
@@ -231,8 +232,21 @@ public sealed class Main : IAsyncPlugin, ISettingProvider, IDisposable
 
     private void SaveSettings()
     {
+        lock (_historyLock)
+        {
+            TrimHistoryToLimit();
+        }
+
         var method = _ctx.API.GetType().GetMethod("SaveSettingJsonStorage", BindingFlags.Public | BindingFlags.Instance);
         method?.MakeGenericMethod(typeof(DesmosSettings)).Invoke(_ctx.API, null);
+    }
+
+    private void TrimHistoryToLimit()
+    {
+        var historyLimit = Math.Clamp(_settings.HistoryLimit, 1, 100);
+        _settings.HistoryLimit = historyLimit;
+        if (_settings.History.Count > historyLimit)
+            _settings.History.RemoveRange(historyLimit, _settings.History.Count - historyLimit);
     }
 
     public void Dispose()
