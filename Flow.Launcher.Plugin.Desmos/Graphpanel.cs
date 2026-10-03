@@ -236,8 +236,16 @@ public sealed class GraphPanel : UserControl, IDisposable
     }
 
     private static readonly Regex Funcs = new(
-        @"(?<![\\A-Za-z])(arcsin|arccos|arctan|sinh|cosh|tanh|sin|cos|tan|sec|csc|cot|ln|log)(?=\s*\()",
-        RegexOptions.Compiled);
+        @"(?<![\\A-Za-z])(arcsin|arccos|arctan|asin|acos|atan|asinh|acosh|atanh|sinh|cosh|tanh|sin|cos|tan|sec|csc|cosec|cosecant|cot|cotan|cotangent|ln|log|floor|ceil|ceiling|round|sign|sgn|min|max|mod)(?=\s*\()",
+        RegexOptions.Compiled | RegexOptions.IgnoreCase);
+    private static readonly Regex Cbrt = new(@"\bcbrt\(([^()]*)\)", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+    private static readonly Regex Root = new(@"\b(?:root|nthroot)\(\s*([^,()]+)\s*,\s*([^()]*)\)", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+    private static readonly Regex Log10 = new(@"\b(?:log10|lg)\(([^()]*)\)", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+    private static readonly Regex Log2 = new(@"\blog2\(([^()]*)\)", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+    private static readonly Regex LogBase = new(@"\blogb\(\s*([^,()]+)\s*,\s*([^()]*)\)", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+    private static readonly Regex Clamp = new(@"\bclamp\(\s*([^,()]+)\s*,\s*([^,()]+)\s*,\s*([^()]*)\)", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+    private static readonly Regex AbsoluteBars = new(@"(?<!\|)\|([^|]+)\|(?!\|)", RegexOptions.Compiled);
+    private static readonly Regex Theta = new(@"(?<![\\A-Za-z])theta(?![A-Za-z])", RegexOptions.Compiled | RegexOptions.IgnoreCase);
     private static readonly Regex Pi = new(@"(?<![\\A-Za-z])pi(?![A-Za-z])", RegexOptions.Compiled | RegexOptions.IgnoreCase);
     private static readonly Regex BigExp = new(@"\^(\d{2,})", RegexOptions.Compiled);
     private static readonly Regex ParenExp = new(@"\^\(([^()]*)\)", RegexOptions.Compiled);
@@ -245,10 +253,28 @@ public sealed class GraphPanel : UserControl, IDisposable
     // Convert common plain-text forms while leaving raw LaTeX usable.
     private static string ToLatex(string s)
     {
+        s = Root.Replace(s, @"\sqrt[$1]{$2}");
+        s = Cbrt.Replace(s, @"\sqrt[3]{$1}");
         s = Regex.Replace(s, @"\bsqrt\(([^()]*)\)", @"\sqrt{$1}", RegexOptions.IgnoreCase);
         s = Regex.Replace(s, @"\babs\(([^()]*)\)", @"\left|$1\right|", RegexOptions.IgnoreCase);
+        s = AbsoluteBars.Replace(s, @"\left|$1\right|");
         s = Regex.Replace(s, @"\binf(?:inity)?\b", @"\infty", RegexOptions.IgnoreCase);
-        s = Funcs.Replace(s, @"\$1");
+        s = Clamp.Replace(s, @"\min(\max($1,$2),$3)");
+        s = LogBase.Replace(s, @"\log_{$1}($2)");
+        s = Log10.Replace(s, @"\log_{10}($1)");
+        s = Log2.Replace(s, @"\log_{2}($1)");
+        s = Theta.Replace(s, @"\theta");
+        s = Funcs.Replace(s, match => match.Groups[1].Value.ToLowerInvariant() switch
+        {
+            "asin" => @"\arcsin",
+            "acos" => @"\arccos",
+            "atan" => @"\arctan",
+            "cosec" or "cosecant" => @"\csc",
+            "cotan" or "cotangent" => @"\cot",
+            "ceiling" => @"\ceil",
+            "sgn" => @"\sign",
+            _ => $@"\{match.Groups[1].Value}"
+        });
         s = Pi.Replace(s, @"\pi");
         s = BigExp.Replace(s, "^{$1}");
         s = ParenExp.Replace(s, "^{$1}");

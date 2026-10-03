@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Reflection;
 using System.Text.RegularExpressions;
 using System.Threading;
@@ -48,6 +47,11 @@ public sealed class Main : IAsyncPlugin, ISettingProvider, IDisposable
             search = search[2..].Trim();
         }
 
+        if (IsClearHistoryQuery(search))
+        {
+            return Task.FromResult(new List<Result> { CreateClearHistoryResult() });
+        }
+
         if (search.Length == 0)
         {
             var results = new List<Result>
@@ -55,7 +59,7 @@ public sealed class Main : IAsyncPlugin, ISettingProvider, IDisposable
                 new()
                 {
                     Title = "Type an expression",
-                    SubTitle = "des y=x^2 ; y=2x+1     |     des 3d z=sin(x)*cos(y)",
+                    SubTitle = "des <expr>, des 3d <expr>",
                     IcoPath = "desmos.png"
                 }
             };
@@ -71,6 +75,10 @@ public sealed class Main : IAsyncPlugin, ISettingProvider, IDisposable
                 var (expression, is3d) = DecodeHistory(stored);
                 return CreateGraphResult(expression, is3d, true);
             }));
+
+            if (history.Count > 0)
+                results.Add(CreateClearHistoryResult());
+
             return Task.FromResult(results);
         }
 
@@ -78,8 +86,7 @@ public sealed class Main : IAsyncPlugin, ISettingProvider, IDisposable
             ScheduleHistory(EncodeHistory(search, is3d));
         return Task.FromResult(new List<Result>
         {
-            CreateGraphResult(search, is3d, false),
-            CreateBrowserResult(search, is3d)
+            CreateGraphResult(search, is3d, false)
         });
     }
 
@@ -145,6 +152,10 @@ public sealed class Main : IAsyncPlugin, ISettingProvider, IDisposable
                Regex.IsMatch(expression, @"\([^,]+,[^)]+\)");
     }
 
+    private static bool IsClearHistoryQuery(string search)
+        => string.Equals(search, "clear", StringComparison.OrdinalIgnoreCase) ||
+           string.Equals(search, "clear history", StringComparison.OrdinalIgnoreCase);
+
     private static string EncodeHistory(string expression, bool is3d)
         => is3d ? $"3d {expression}" : expression;
 
@@ -178,28 +189,23 @@ public sealed class Main : IAsyncPlugin, ISettingProvider, IDisposable
         return method?.Invoke(_ctx.API, null) as bool? ?? false;
     }
 
-    private Result CreateBrowserResult(string expression, bool is3d)
+    private Result CreateClearHistoryResult()
     {
         return new Result
         {
-            Title = "Open in Desmos browser",
-            SubTitle = "Opens Desmos and copies the expression to the clipboard",
+            Title = "Clear Desmos history",
+            SubTitle = "Remove all recent expressions",
             IcoPath = "desmos.png",
             Action = _ =>
             {
-                AddToHistory(expression);
-                _ctx.API.CopyToClipboard(expression);
-                var url = is3d ? "https://www.desmos.com/3d" : "https://www.desmos.com/calculator";
-                try
+                lock (_historyLock)
                 {
-                    Process.Start(new ProcessStartInfo(url) { UseShellExecute = true });
-                }
-                catch (Exception exception)
-                {
-                    _ctx.API.ShowMsg("Could not open Desmos", exception.Message);
-                    return false;
+                    _settings.History.Clear();
+                    _pendingHistoryExpression = null;
+                    _historyTimer.Change(Timeout.Infinite, Timeout.Infinite);
                 }
 
+                SaveSettings();
                 return true;
             }
         };

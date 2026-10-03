@@ -1,23 +1,109 @@
 # Flow Launcher Desmos Plugin
 
-A small plugin for [Flow Launcher](https://github.com/Flow-Launcher/Flow.Launcher) that opens graph expressions in [Desmos](https://www.desmos.com/calculator).
+A Flow Launcher plugin for quickly previewing mathematical expressions with
+[Desmos](https://www.desmos.com) from the search bar.
 
 ## Usage
 
 Use the `des` keyword:
 
-- `des y=x^2`
-- `des y=sin(x)`
-- `des y=x^2 ; y=2x+1`
-- `des 3d z=sin(x)*cos(y)`
+```text
+des y=x^2
+des y=sin(x)
+des y=x^2 ; y=2x+1
+des 3d z=sin(x)*cos(y)
+```
 
-## Features
+Separate multiple expressions with `;`. Expressions are rendered in an inline
+Desmos preview, and pressing Enter copies the original input to the clipboard.
 
-- 2D and 3D graph support
-- inline preview in Flow Launcher
-- recent expression history
-- copies the expression to the clipboard
-- opens the correct Desmos page for the graph type
+## Supported functionality
+
+### Graph modes
+
+- 2D graphs are the default.
+- Add `3d` before the expression for a 3D graph:
+  `des 3d z=sin(x)*cos(y)`.
+- The preview uses Desmos's calculator and refreshes when the query changes.
+- Preview colors can follow the Flow Launcher theme when theme synchronization
+  is enabled in settings.
+
+### Expression conversion
+
+Normal Desmos and LaTeX syntax is supported. The plugin also converts common
+plain-text forms before displaying the preview:
+
+| Input | Converted form |
+| --- | --- |
+| `sqrt(x)` | `\sqrt{x}` |
+| `cbrt(x)` | `\sqrt[3]{x}` |
+| `root(n,x)` or `nthroot(n,x)` | `\sqrt[n]{x}` |
+| `x^100` | `x^{100}` |
+| `x^(1/3)` | `x^{1/3}` |
+| `pi` | `\pi` |
+| `infinity` or `inf` | `\infty` |
+| `abs(x)` | `\left|x\right|` |
+| `|x|` | `\left|x\right|` |
+| `theta` | `\theta` |
+| `*` | `\cdot` |
+
+`root` and `nthroot` use the order `root(index,value)`, for example
+`root(3,8)`.
+
+Absolute-value notation can be used either as `abs(x)` or `|x|`.
+
+### Function names and aliases
+
+Function names are converted when followed by parentheses. Supported
+function groups include:
+
+- Trigonometric: `sin`, `cos`, `tan`, `sec`, `csc`, `cot`
+- Inverse trigonometric: `arcsin`, `arccos`, `arctan`
+- Hyperbolic: `sinh`, `cosh`, `tanh`
+- Logarithms: `ln`, `log`
+- Rounding and comparison: `floor`, `ceil`, `round`, `sign`, `min`, `max`,
+  `mod`
+
+Aliases are converted as follows:
+
+| Aliases | Canonical function |
+| --- | --- |
+| `asin` | `arcsin` |
+| `acos` | `arccos` |
+| `atan` | `arctan` |
+| `cosec`, `cosecant` | `csc` |
+| `cotan`, `cotangent` | `cot` |
+| `ceiling` | `ceil` |
+| `sgn` | `sign` |
+
+Additional logarithm helpers:
+
+- `log10(x)` and `lg(x)` become base-10 logarithms.
+- `log2(x)` becomes a base-2 logarithm.
+- `logb(base,value)` becomes a logarithm with the specified base.
+
+The `clamp(value,min,max)` helper is converted to
+`min(max(value,min),max)`.
+
+Desmos-native notation can also be entered directly for features such as
+piecewise expressions, derivatives, integrals, lists, restrictions, and
+parametric or polar graphs.
+
+### History and commands
+
+- Graphable searches are added to recent history after a short debounce.
+- Duplicate entries are moved to the top instead of being repeated.
+- 3D history entries retain their 3D mode.
+- History is limited to the configured range of 1-100 entries (20 by default).
+- When the `des` query is empty, history appears below the usage hint.
+- A **Clear Desmos history** action appears after the history entries.
+- Type `des clear` or `des clear history` to clear saved expressions.
+
+### Settings
+
+- **Sync theme**: follow Flow Launcher's dark/light theme in the preview.
+- **History entries**: configure how many recent expressions are retained,
+  from 1 to 100.
 
 ## Install
 
