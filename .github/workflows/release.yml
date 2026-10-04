@@ -1,0 +1,42 @@
+name: Build and Release
+
+permissions:
+  contents: write
+
+on:
+  push:
+    tags:
+      - "*.*.*"
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+      - name: Get code
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+
+      - name: Restore packages
+        run: dotnet restore
+
+      - name: Clean
+        run: dotnet clean
+
+      - name: Build plugin
+        run: dotnet publish -c Release -o publish
+
+      - name: Zip plugin
+        run: |
+          Compress-Archive -Path publish\* -DestinationPath Flow.Launcher.Plugin.Desmos.zip
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: Flow.Launcher.Plugin.Desmos.zip
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
